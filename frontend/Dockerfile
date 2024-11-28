@@ -23,10 +23,10 @@ WORKDIR /frontend
 COPY --from=base /frontend/node_modules ./node_modules
 
 # Expose application port
-EXPOSE 3000
+EXPOSE 5173
 
 # Copy the rest of the application files
 COPY . .
 
 # Command to start the application
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

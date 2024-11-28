@@ -1,6 +1,55 @@
 services:
   frontend:
     env_file:
-      - .env
+      - ./frontend/.env
     build: ./frontend
-    
+    ports:
+      - "80:5173"
+    networks:
+      - devopsdojo
+  backend:
+    env_file:
+      - ./backend/.env
+    build: ./backend
+    ports:
+      - "8000:8000"
+    networks:
+      - devopsdojo
+    depends_on:
+      - db
+    command: >
+      sh -c "
+      until pg_isready -h db -U app; do
+        echo 'Waiting for database...';
+        sleep 2;
+      done;
+      poetry run bash ./prestart.sh && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  db:
+    image: postgres:13-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=app
+    # ports:
+    #   - "5432:5432"
+    networks:
+      - devopsdojo
+    volumes: 
+      - db:/var/lib/postgresql/data
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - devopsdojo
+
+networks:
+  devopsdojo:
+    driver: bridge
+    name: devopsdojo
+
+volumes:
+  db:
+    driver: local

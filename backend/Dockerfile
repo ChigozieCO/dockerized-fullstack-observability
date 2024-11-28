@@ -15,7 +15,7 @@ WORKDIR /backend
 COPY pyproject.toml poetry.lock ./
 
 # Install dependencies with Poetry
-RUN poetry config virtualenvs.create true && poetry install --only main
+RUN poetry config virtualenvs.create true && poetry install --no-root
 
 # Second stage: Slim final image
 FROM python:3.10-slim
@@ -28,6 +28,9 @@ COPY --from=builder /root/.cache/pypoetry/virtualenvs /venv
 
 # Set virtual environment path
 ENV PATH="/venv/bin:$PATH"
+
+# Install dependencies
+RUN apt update && apt install -y curl postgresql-client && rm -rf /var/lib/apt/lists/* && apt clean
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
@@ -42,4 +45,4 @@ COPY . .
 EXPOSE 8000
 
 # Command to start the application
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--reload", "--", "--host"]
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--reload", "--", "--host", "8000"]

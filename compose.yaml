@@ -10,6 +10,8 @@ services:
   backend:
     env_file:
       - ./backend/.env
+    environment:
+      - PYTHONPATH=/backend
     build: ./backend
     ports:
       - "8000:8000"
@@ -29,7 +31,7 @@ services:
     restart: always
     environment:
       - POSTGRES_USER=app
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=changethis123
       - POSTGRES_DB=app
     # ports:
     #   - "5432:5432"

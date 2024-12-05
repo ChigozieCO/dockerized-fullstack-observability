@@ -1,0 +1,62 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+# Configure SSL for domain
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: cnma.staging@gmail.com
+      storage: acme.json
+      httpChallenge:
+        entryPoint: web
+
+http:
+  # Configure routers
+  routers:
+    # Redirect www to non-www
+    redirect-www:
+      rule: "Host(`www.projectchigozie.me`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - redirect-www
+      service: noop@internal # A no-operation service for redirecting
+
+    # Main router for domain
+    web-secure:
+      rule: "Host(`projectchigozie.me`)"
+      entryPoints:
+        - websecure
+      service: web
+      tls:
+        certResolver: myresolver
+
+    prometheus:
+      rule: "Path(`/prometheus`)"
+      entryPoints: websecure
+      service: prometheus@internal
+
+  middlewares:
+    # Redirect http to https
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+
+    # Redirect www to non-www
+    redirect-www:
+      redirectRegex:
+        regex: "^https?://www\\.(.*)"
+        replacement: "https://$1"
+        permanent: true
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+
+providers:
+  docker:
+    exposedByDefault: false

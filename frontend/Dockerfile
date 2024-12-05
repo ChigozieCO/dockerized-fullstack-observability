@@ -5,7 +5,7 @@ FROM node:22-slim AS base
 WORKDIR /frontend
 
 # Install debugging tools
-RUN apt update && apt install -y bash net-tools
+RUN apt update && apt install -y bash net-tools && rm -rf /var/lib/apt/lists/*
 
 # Copy package.json and package-lock.json separately for better caching
 COPY package*.json ./

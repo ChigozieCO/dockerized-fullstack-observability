@@ -1,62 +1,81 @@
 entryPoints:
+  # Entry point for HTTP traffic on port 80
   web:
     address: ":80"
+  # Entry point for HTTPS traffic on port 443
   websecure:
     address: ":443"
 
-# Configure SSL for domain
+# Configuration for obtaining SSL certificates via Let's Encrypt
 certificatesResolvers:
   myresolver:
     acme:
+      # Email address for Let's Encrypt notifications and account management
       email: cnma.staging@gmail.com
+      # Storage file for SSL certificates
       storage: acme.json
+      # Use HTTP challenge for domain verification
       httpChallenge:
         entryPoint: web
 
 http:
-  # Configure routers
+  # Configure routers for handling requests
   routers:
-    # Redirect www to non-www
-    redirect-www:
-      rule: "Host(`www.projectchigozie.me`)"
+    # Router to redirect all HTTP traffic to HTTPS
+    redirect-to-https:
+      rule: "HostRegexp(`{host:.+}`)" # Match all HTTP requests with any hostname
       entryPoints:
-        - websecure
+        - web # Applies to HTTP traffic only
       middlewares:
-        - redirect-www
-      service: noop@internal # A no-operation service for redirecting
+        - redirect-to-https # Middleware to handle the redirection
+      service: noop@internal # No actual service, just a placeholder for redirection
 
-    # Main router for domain
-    web-secure:
-      rule: "Host(`projectchigozie.me`)"
+    # Router to redirect 'www.projectchigozie.me' to 'projectchigozie.me'
+    redirect-www:
+      rule: "Host(`www.projectchigozie.me`)" # Matches requests for 'www.projectchigozie.me'
       entryPoints:
-        - websecure
-      service: web
-      tls:
-        certResolver: myresolver
+        - web # Applies to HTTP traffic
+        - websecure # Applies to HTTPS traffic
+      middlewares:
+        - redirect-www # Middleware to handle the redirection
+      service: noop@internal # No actual service, just a placeholder for redirection
 
+    # Main router for handling requests to 'projectchigozie.me'
+    web-secure:
+      rule: "Host(`projectchigozie.me`)" # Matches requests for 'projectchigozie.me'
+      entryPoints:
+        - websecure # Applies only to HTTPS traffic
+      service: frontend # Forwards requests to the 'frontend' service
+      tls:
+        certResolver: myresolver # Uses Let's Encrypt to obtain and manage SSL certificates
+
+    # Router for exposing Prometheus metrics
     prometheus:
-      rule: "Path(`/prometheus`)"
-      entryPoints: websecure
-      service: prometheus@internal
+      rule: "Path(`/prometheus`)" # Matches requests for the '/prometheus' path
+      entryPoints:
+        - websecure # Applies only to HTTPS traffic
+      service: prometheus@internal # Internal service for Prometheus metrics
 
   middlewares:
-    # Redirect http to https
+    # Middleware to redirect HTTP to HTTPS
     redirect-to-https:
       redirectScheme:
-        scheme: https
+        scheme: https # Redirects to HTTPS
 
-    # Redirect www to non-www
+    # Middleware to redirect 'www' subdomain to the root domain
     redirect-www:
       redirectRegex:
-        regex: "^https?://www\\.(.*)"
-        replacement: "https://$1"
-        permanent: true
+        regex: "^https?://www\\.(.*)" # Matches URLs starting with 'www.'
+        replacement: "https://$1" # Replaces 'www.' with the root domain
+        permanent: true # Sends a permanent redirect (HTTP 301)
 
+# Enable Prometheus metrics for monitoring
 metrics:
   prometheus:
-    addEntryPointsLabels: true
-    addServicesLabels: true
+    addEntryPointsLabels: true # Adds labels for entry points
+    addServicesLabels: true # Adds labels for services
 
+# Use Docker as the provider for Traefik configurations
 providers:
   docker:
-    exposedByDefault: false
+    exposedByDefault: false # Only explicitly exposed containers will be served by Traefik

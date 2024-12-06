@@ -3,18 +3,19 @@ services:
     env_file:
       - ./frontend/.env
     build: ./frontend
-    ports:
-      - "80:5173"
+    # ports:
+    #   - "80:5173"
     networks:
       - devopsdojo
+
   backend:
     env_file:
       - ./backend/.env
     environment:
       - PYTHONPATH=/backend
     build: ./backend
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     networks:
       - devopsdojo
     depends_on:
@@ -26,6 +27,7 @@ services:
         sleep 2;
       done;
       poetry run bash ./prestart.sh && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+  
   db:
     image: postgres:13-alpine
     restart: always
@@ -39,13 +41,26 @@ services:
       - devopsdojo
     volumes: 
       - db:/var/lib/postgresql/data
+  
   adminer:
     image: adminer
     restart: always
-    ports:
-      - 8080:8080
+    # ports:
+    #   - 8080:8080
     networks:
       - devopsdojo
+
+  reverse-proxy:
+    image: traefik:v3.2
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    networks:
+      - devopsdojo
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme:/acme.json
 
 networks:
   devopsdojo:

@@ -21,61 +21,76 @@ certificatesResolvers:
 http:
   # Configure routers for handling requests
   routers:
-    # Router to redirect all HTTP traffic to HTTPS
+    # Global HTTP to HTTPS redirection
     redirect-to-https:
-      rule: "HostRegexp(`{host:.+}`)" # Match all HTTP requests with any hostname
+      # Match all HTTP requests with any hostname
+      rule: "HostRegexp(`{host:.+}`)" 
       entryPoints:
-        - web # Applies to HTTP traffic only
+        - web 
+      # Middleware to handle the redirection
       middlewares:
-        - redirect-to-https # Middleware to handle the redirection
-      service: noop@internal # No actual service, just a placeholder for redirection
+        - redirect-to-https 
+      # No actual service, just a placeholder for redirection
+      service: noop@internal
 
-    # Router to redirect 'www.projectchigozie.me' to 'projectchigozie.me'
+    # Router to redirect www to non-www
     redirect-www:
-      rule: "Host(`www.projectchigozie.me`)" # Matches requests for 'www.projectchigozie.me'
+      rule: "Host(`www.projectchigozie.me`)"
       entryPoints:
-        - web # Applies to HTTP traffic
-        - websecure # Applies to HTTPS traffic
+        - web
+        - websecure
+      # Middleware to handle the redirection
       middlewares:
-        - redirect-www # Middleware to handle the redirection
-      service: noop@internal # No actual service, just a placeholder for redirection
+        - redirect-www
+      # No actual service, just a placeholder for redirection
+      service: noop@internal
 
-    # Main router for handling requests to 'projectchigozie.me'
-    web-secure:
-      rule: "Host(`projectchigozie.me`)" # Matches requests for 'projectchigozie.me'
-      entryPoints:
-        - websecure # Applies only to HTTPS traffic
-      service: frontend # Forwards requests to the 'frontend' service
-      tls:
-        certResolver: myresolver # Uses Let's Encrypt to obtain and manage SSL certificates
+    # # Main router for handling requests to 'projectchigozie.me'
+    # web-secure:
+    #   rule: "Host(`projectchigozie.me`)"
+    #   entryPoints:
+    #     - websecure
+    #   # Forwards requests to the 'frontend' service
+    #   service: frontend
+    #   tls:
+    #     certResolver: myresolver
 
-    # Router for exposing Prometheus metrics
-    prometheus:
-      rule: "Path(`/prometheus`)" # Matches requests for the '/prometheus' path
-      entryPoints:
-        - websecure # Applies only to HTTPS traffic
-      service: prometheus@internal # Internal service for Prometheus metrics
+    # # Router for exposing Prometheus metrics
+    # prometheus:
+    #   # Matches requests for the '/prometheus' path
+    #   rule: "Path(`/prometheus`)"
+    #   entryPoints:
+    #     - websecure
+    #   # Internal service for Prometheus metrics
+    #   service: prometheus@internal
 
   middlewares:
     # Middleware to redirect HTTP to HTTPS
     redirect-to-https:
       redirectScheme:
-        scheme: https # Redirects to HTTPS
+        scheme: https
+        # Sends a permanent redirect (HTTP 301)
+        permanent: true
 
     # Middleware to redirect 'www' subdomain to the root domain
     redirect-www:
       redirectRegex:
-        regex: "^https?://www\\.(.*)" # Matches URLs starting with 'www.'
-        replacement: "https://$1" # Replaces 'www.' with the root domain
-        permanent: true # Sends a permanent redirect (HTTP 301)
+        # Matches URLs starting with 'www.'
+        regex: "^https?://www\\.(.*)"
+        # Replaces 'www.' with the root domain
+        replacement: "https://$1"
+        # Sends a permanent redirect (HTTP 301)
+        permanent: true
 
 # Enable Prometheus metrics for monitoring
 metrics:
   prometheus:
-    addEntryPointsLabels: true # Adds labels for entry points
-    addServicesLabels: true # Adds labels for services
+    # Add labels for entry point and service
+    addEntryPointsLabels: true
+    addServicesLabels: true
 
 # Use Docker as the provider for Traefik configurations
 providers:
   docker:
-    exposedByDefault: false # Only explicitly exposed containers will be served by Traefik
+    # Only explicitly exposed containers will be served by Traefik
+    exposedByDefault: false

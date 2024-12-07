@@ -7,6 +7,15 @@ services:
     #   - "80:5173"
     networks:
       - devopsdojo
+    labels:
+      # Enable Traefik for this service and specify the secure entrypoint (HTTPS)
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`projectchigozie.me`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
 
   backend:
     env_file:
@@ -27,6 +36,24 @@ services:
         sleep 2;
       done;
       poetry run bash ./prestart.sh && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    labels:
+      # Enable Traefik for this service and specify the secure entrypoint (HTTPS)
+      - "traefik.enable=true"
+      # Route /api to the backend root
+      - "traefik.http.routers.backend-api.rule=Host(`projectchigozie.me`) && PathPrefix(`/api`)"
+      - "traefik.http.middlewares.api-strip-prefix.stripPrefix.prefixes=/api"
+      - "traefik.http.routers.backend-api.middlewares=api-strip-prefix"
+      - "traefik.http.routers.backend-api.entrypoints=websecure"
+
+      # Route /docs to /docs (Swagger UI)
+      - "traefik.http.routers.backend-docs.rule=Host(`projectchigozie.me`) && PathPrefix(`/docs`)"
+      - "traefik.http.routers.backend-docs.entrypoints=websecure"
+
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.backend-api.tls=true"
+      - "traefik.http.routers.backend-api.tls.certresolver=myresolver"
+      - "traefik.http.routers.backend-docs.tls=true"
+      - "traefik.http.routers.backend-docs.tls.certresolver=myresolver"
   
   db:
     image: postgres:13-alpine
@@ -49,6 +76,14 @@ services:
     #   - 8080:8080
     networks:
       - devopsdojo
+    labels:
+      # Enable Traefik for this service and specify the secure entrypoint (HTTPS)
+      - "traefik.enable=true"
+      - "traefik.http.routers.adminer.rule=Host(`db.projectchigozie.me`)"
+      - "traefik.http.routers.adminer.entrypoints=websecure"
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.adminer.tls=true"
+      - "traefik.http.routers.adminer.tls.certresolver=myresolver"
 
   reverse-proxy:
     image: traefik:v3.2
@@ -60,7 +95,18 @@ services:
       - devopsdojo
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - acme:/acme.json
+      - ./acme:/acme.json
+    labels:
+      # Enable Traefik for this service
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`projectchigozie.me`) && PathPrefix(`/traefik`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=strip-traefik-prefix"
+      - "traefik.http.middlewares.strip-traefik-prefix.stripPrefix.prefixes=/traefik"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
 
 networks:
   devopsdojo:

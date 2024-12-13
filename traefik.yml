@@ -89,6 +89,15 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
 
+log:
+  # Set the logging level to DEBUG
+  level: DEBUG
+
+api:
+  # Enable the dashboard api
+  dashboard: true
+  insecure: true
+
 # Use Docker as the provider for Traefik configurations
 providers:
   docker:

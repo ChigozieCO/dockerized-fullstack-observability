@@ -39,21 +39,31 @@ services:
     labels:
       # Enable Traefik for this service and specify the secure entrypoint (HTTPS)
       - "traefik.enable=true"
+      # # Middleware for CORS
+      - "traefik.http.middlewares.backend-cors.headers.accessControlAllowOriginList=https://projectchigozie.me"
       # Route /api to the backend root
       - "traefik.http.routers.backend-api.rule=Host(`projectchigozie.me`) && PathPrefix(`/api`)"
       - "traefik.http.middlewares.api-strip-prefix.stripPrefix.prefixes=/api"
-      - "traefik.http.routers.backend-api.middlewares=api-strip-prefix"
+      - "traefik.http.routers.backend-api.middlewares=api-strip-prefix,backend-cors"
       - "traefik.http.routers.backend-api.entrypoints=websecure"
 
       # Route /docs to /docs (Swagger UI)
       - "traefik.http.routers.backend-docs.rule=Host(`projectchigozie.me`) && PathPrefix(`/docs`)"
+      - "traefik.http.routers.backend-docs.middlewares=backend-cors"
       - "traefik.http.routers.backend-docs.entrypoints=websecure"
 
-      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      # Route /api/v1/openapi.json to the OpenAPI spec
+      - "traefik.http.routers.backend-openapi.rule=Host(`projectchigozie.me`) && Path(`/api/v1/openapi.json`)"
+      - "traefik.http.routers.backend-openapi.middlewares=backend-cors"
+      - "traefik.http.routers.backend-openapi.entrypoints=websecure"
+
+      # Enable TLS for these routers & use the 'myresolver' certificates resolver for obtaining SSL certificates
       - "traefik.http.routers.backend-api.tls=true"
       - "traefik.http.routers.backend-api.tls.certresolver=myresolver"
       - "traefik.http.routers.backend-docs.tls=true"
       - "traefik.http.routers.backend-docs.tls.certresolver=myresolver"
+      - "traefik.http.routers.backend-openapi.tls=true"
+      - "traefik.http.routers.backend-openapi.tls.certresolver=myresolver"
   
   db:
     image: postgres:13-alpine
@@ -104,9 +114,13 @@ services:
       - "traefik.http.routers.dashboard.middlewares=strip-traefik-prefix"
       - "traefik.http.middlewares.strip-traefik-prefix.stripPrefix.prefixes=/traefik"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
+
       # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+
+      # Set a high priority for the Traefik dashboard route
+      - "traefik.http.routers.dashboard.priority=1000"
 
 networks:
   devopsdojo:

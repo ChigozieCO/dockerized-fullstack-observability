@@ -3,6 +3,7 @@ services:
     env_file:
       - ./frontend/.env
     build: ./frontend
+    container_name: frontend
     # ports:
     #   - "80:5173"
     networks:
@@ -23,6 +24,7 @@ services:
     environment:
       - PYTHONPATH=/backend
     build: ./backend
+    container_name: backend
     # ports:
     #   - "8000:8000"
     networks:
@@ -67,6 +69,7 @@ services:
   
   db:
     image: postgres:13-alpine
+    container_name: db
     restart: always
     environment:
       - POSTGRES_USER=app
@@ -81,6 +84,7 @@ services:
   
   adminer:
     image: adminer
+    container_name: adminer
     restart: always
     # ports:
     #   - 8080:8080
@@ -97,27 +101,42 @@ services:
 
   reverse-proxy:
     image: traefik:v3.2
+    container_name: traefik
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    command:
+      - "--api=true"
     networks:
       - devopsdojo
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml
       - ./acme:/acme.json
     labels:
       # Enable Traefik for this service
       - "traefik.enable=true"
+
+      # Dashboard route
       - "traefik.http.routers.dashboard.rule=Host(`projectchigozie.me`) && PathPrefix(`/traefik`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.service=dashboard@internal"
       - "traefik.http.routers.dashboard.middlewares=strip-traefik-prefix"
+
+      # API route for the dashboard (internal API)
+      - "traefik.http.routers.dashboard-api.rule=Host(`projectchigozie.me`) && PathPrefix(`/traefik/api`)"
+      - "traefik.http.routers.dashboard-api.service=api@internal"
+      - "traefik.http.routers.dashboard-api.entrypoints=traefik"
+
+      # Middleware to strip the /traefik prefix for the dashboard route
       - "traefik.http.middlewares.strip-traefik-prefix.stripPrefix.prefixes=/traefik"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.entrypoints=traefik"
 
       # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.dashboard-api.tls=true"
+      - "traefik.http.routers.dashboard-api.tls.certresolver=myresolver"
 
       # Set a high priority for the Traefik dashboard route
       - "traefik.http.routers.dashboard.priority=1000"

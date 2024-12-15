@@ -5,6 +5,8 @@ entryPoints:
   # Entry point for HTTPS traffic on port 443
   websecure:
     address: ":443"
+  traefik:
+    address: ":8080"
 
 # Configuration for obtaining SSL certificates via Let's Encrypt
 certificatesResolvers:
@@ -92,6 +94,7 @@ metrics:
 log:
   # Set the logging level to DEBUG
   level: DEBUG
+  format: json
 
 api:
   # Enable the dashboard api

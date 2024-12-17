@@ -5,8 +5,6 @@ entryPoints:
   # Entry point for HTTPS traffic on port 443
   websecure:
     address: ":443"
-  traefik:
-    address: ":8080"
 
 # Configuration for obtaining SSL certificates via Let's Encrypt
 certificatesResolvers:
@@ -99,7 +97,7 @@ log:
 api:
   # Enable the dashboard api
   dashboard: true
-  insecure: true
+  insecure: false
 
 # Use Docker as the provider for Traefik configurations
 providers:

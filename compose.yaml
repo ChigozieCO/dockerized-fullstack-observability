@@ -107,7 +107,7 @@ services:
       - "443:443"
       - "8080:8080"
     command:
-      - "--api=true"
+      - --api
     networks:
       - devopsdojo
     volumes:
@@ -119,27 +119,24 @@ services:
       - "traefik.enable=true"
 
       # Dashboard route
-      - "traefik.http.routers.dashboard.rule=Host(`projectchigozie.me`) && PathPrefix(`/traefik`)"
-      - "traefik.http.routers.dashboard.service=dashboard@internal"
-      - "traefik.http.routers.dashboard.middlewares=strip-traefik-prefix"
-
-      # API route for the dashboard (internal API)
-      - "traefik.http.routers.dashboard-api.rule=Host(`projectchigozie.me`) && PathPrefix(`/traefik/api`)"
+      - "traefik.http.routers.dashboard-api.rule=Host(`projectchigozie.me`) && PathPrefix(`/dashboard`) || (PathPrefix(`/debug`) || PathPrefix(`/api/http`) || PathPrefix(`/api/tcp`) || PathPrefix(`/api/udp`) || PathPrefix(`/api/entrypoints`) || PathPrefix(`/api/overview`) || PathPrefix(`/api/rawdata`) || PathPrefix(`/api/version`))"
       - "traefik.http.routers.dashboard-api.service=api@internal"
-      - "traefik.http.routers.dashboard-api.entrypoints=traefik"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$2y$$05$$WdZvGjRc.quOQ9YuoiNd4.mEHXXJgWB0vW66wvaafldqlM0vORThO"
+      - "traefik.http.routers.dashboard-api.middlewares=dashboard-auth"
+      - "traefik.http.routers.dashboard-api.entrypoints=websecure"
 
-      # Middleware to strip the /traefik prefix for the dashboard route
-      - "traefik.http.middlewares.strip-traefik-prefix.stripPrefix.prefixes=/traefik"
-      - "traefik.http.routers.dashboard.entrypoints=traefik"
+      # # Middleware to strip the /traefik prefix for the dashboard route
+      # - "traefik.http.middlewares.strip-traefik-prefix.stripPrefix.prefixes=/traefik"
+      # - "traefik.http.routers.dashboard.entrypoints=traefik"
 
       # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
-      - "traefik.http.routers.dashboard.tls=true"
-      - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
+      # - "traefik.http.routers.dashboard.tls=true"
+      # - "traefik.http.routers.dashboard.tls.certresolver=myresolver"
       - "traefik.http.routers.dashboard-api.tls=true"
       - "traefik.http.routers.dashboard-api.tls.certresolver=myresolver"
 
-      # Set a high priority for the Traefik dashboard route
-      - "traefik.http.routers.dashboard.priority=1000"
+      # # Set a high priority for the Traefik dashboard route
+      # - "traefik.http.routers.dashboard.priority=1000"
 
 networks:
   devopsdojo:

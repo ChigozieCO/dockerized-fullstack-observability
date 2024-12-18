@@ -122,7 +122,7 @@ services:
       - "traefik.http.routers.dashboard-api.rule=Host(`projectchigozie.me`) && PathPrefix(`/dashboard`) || (PathPrefix(`/debug`) || PathPrefix(`/api/http`) || PathPrefix(`/api/tcp`) || PathPrefix(`/api/udp`) || PathPrefix(`/api/entrypoints`) || PathPrefix(`/api/overview`) || PathPrefix(`/api/rawdata`) || PathPrefix(`/api/version`))"
       - "traefik.http.routers.dashboard-api.service=api@internal"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=admin:$$2y$$05$$WdZvGjRc.quOQ9YuoiNd4.mEHXXJgWB0vW66wvaafldqlM0vORThO"
-      - "traefik.http.routers.dashboard-api.middlewares=dashboard-auth"
+      - "traefik.http.routers.dashboard-api.middlewares=dashboard-auth,redirect-dashboard"
       - "traefik.http.routers.dashboard-api.entrypoints=websecure"
 
       # # Middleware to strip the /traefik prefix for the dashboard route
@@ -137,6 +137,11 @@ services:
 
       # # Set a high priority for the Traefik dashboard route
       # - "traefik.http.routers.dashboard.priority=1000"
+
+      # Redirect /dashboard to /dashboard/
+      - "traefik.http.middlewares.redirect-dashboard.redirectregex.regex=^https?://(.*)/dashboard$$"
+      - "traefik.http.middlewares.redirect-dashboard.redirectregex.replacement=https://$1/dashboard/"
+      - "traefik.http.middlewares.redirect-dashboard.redirectregex.permanent=true"
 
 networks:
   devopsdojo:

@@ -1,0 +1,31 @@
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restarts: unless-stopped
+    command: 
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - devopsdojo
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/
+      - prom_data:/prometheus
+    labels:
+      # Enable Traefik for this service, configure router and specify entrypoint
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`projectchigozie.me`) && PathPrefix(`/prometheus`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+
+      # Tell Traefik to use the port 9090 to connect to prometheus
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.prometheus.tls=true"
+
+  volumes:
+    prom_data:
+
+  networks:
+    devopsdojo:
+      name: devopsdojo
+      external: true

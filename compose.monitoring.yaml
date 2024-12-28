@@ -37,8 +37,34 @@ services:
     networks:
       - devopsdojo
 
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - "GF_SERVER_DOMAIN=projectchigozie.me"
+      - "GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana"
+      - "GF_SERVER_SERVE_FROM_SUB_PATH=true"
+    networks:
+      - devopsdojo
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    labels:
+      # Enable Traefik for this service, configure router and specify entrypoint
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`projectchigozie.me`) && PathPrefix(`/grafana`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+
+      # Tell Traefik to use the port 3000 to connect to grafana
+      - "traefik.http.services.grafana.loadbalancer.server.url=http://grafana:3000"
+
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+
 volumes:
   prom_data:
+  grafana-storage:
 
 networks:
   devopsdojo:

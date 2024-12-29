@@ -37,6 +37,55 @@ services:
     networks:
       - devopsdojo
 
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    restart: unless-stopped
+    command: 
+      - '--config.file=/etc/loki/loki-config.yaml'
+    networks:
+      - devopsdojo
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki-data:/loki
+    labels:
+      # Enable Traefik for this service, configure router and specify entrypoint
+      - "traefik.enable=true"
+      - "traefik.http.routers.loki.rule=Host(`projectchigozie.me`) && PathPrefix(`/loki`)"
+      - "traefik.http.routers.loki.entrypoints=websecure"
+
+      # Tell Traefik to use the port 3100 to connect to loki
+      - "traefik.http.services.loki.loadbalancer.server.url=http://loki:3100/"
+
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.loki.tls=true"
+      - "traefik.http.routers.loki.tls.certresolver=myresolver"
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    restart: unless-stopped
+    command: 
+      - '--config.file=/etc/promtail/config.yml'
+    networks:
+      - devopsdojo
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    labels:
+      # Enable Traefik for this service, configure router and specify entrypoint
+      - "traefik.enable=true"
+      - "traefik.http.routers.promtail.rule=Host(`projectchigozie.me`) && PathPrefix(`/promtail`)"
+      - "traefik.http.routers.promtail.entrypoints=websecure"
+
+      # Tell Traefik to use the port 9080 to connect to promtail
+      - "traefik.http.services.promtail.loadbalancer.server.url=http://promtail:9080/"
+
+      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+      - "traefik.http.routers.promtail.tls=true"
+      - "traefik.http.routers.promtail.tls.certresolver=myresolver"
+
   grafana:
     image: grafana/grafana
     container_name: grafana
@@ -64,6 +113,7 @@ services:
 
 volumes:
   prom_data:
+  loki-data:
   grafana-storage:
 
 networks:

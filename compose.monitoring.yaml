@@ -70,21 +70,21 @@ services:
     networks:
       - devopsdojo
     volumes:
-      - ./promtail-config.yml:/etc/promtail/config.yml
+      - ./promtail-config.yaml:/etc/promtail/config.yml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/log:/var/log:ro
-    labels:
-      # Enable Traefik for this service, configure router and specify entrypoint
-      - "traefik.enable=true"
-      - "traefik.http.routers.promtail.rule=Host(`projectchigozie.me`) && PathPrefix(`/promtail`)"
-      - "traefik.http.routers.promtail.entrypoints=websecure"
+    # labels:
+    #   # Enable Traefik for this service, configure router and specify entrypoint
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.promtail.rule=Host(`projectchigozie.me`) && PathPrefix(`/promtail`)"
+    #   - "traefik.http.routers.promtail.entrypoints=websecure"
 
-      # Tell Traefik to use the port 9080 to connect to promtail
-      - "traefik.http.services.promtail.loadbalancer.server.url=http://promtail:9080/"
+    #   # Tell Traefik to use the port 9080 to connect to promtail
+    #   - "traefik.http.services.promtail.loadbalancer.server.url=http://promtail:9080/"
 
-      # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
-      - "traefik.http.routers.promtail.tls=true"
-      - "traefik.http.routers.promtail.tls.certresolver=myresolver"
+    #   # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
+    #   - "traefik.http.routers.promtail.tls=true"
+    #   - "traefik.http.routers.promtail.tls.certresolver=myresolver"
 
   grafana:
     image: grafana/grafana

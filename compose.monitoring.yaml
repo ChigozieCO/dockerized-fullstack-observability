@@ -57,6 +57,10 @@ services:
       # Tell Traefik to use the port 3100 to connect to loki
       - "traefik.http.services.loki.loadbalancer.server.url=http://loki:3100/"
 
+      # Add middleware to strip the prefix
+      - "traefik.http.middlewares.loki-strip.stripprefix.prefixes=/loki"
+      - "traefik.http.routers.loki.middlewares=loki-strip"
+
       # Enable TLS for this router & use the 'myresolver' certificates resolver for obtaining SSL certificates
       - "traefik.http.routers.loki.tls=true"
       - "traefik.http.routers.loki.tls.certresolver=myresolver"

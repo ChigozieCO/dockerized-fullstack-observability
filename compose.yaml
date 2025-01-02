@@ -1,3 +1,6 @@
+include:
+  - compose.monitoring.yaml
+
 services:
   frontend:
     env_file:
@@ -114,7 +117,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/etc/traefik/traefik.yml
-      - ./acme:/acme.json
+      - ./acme.json:/acme.json
     labels:
       # Enable Traefik for this service
       - "traefik.enable=true"

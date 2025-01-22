@@ -17,6 +17,9 @@ ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /backend
 COPY pyproject.toml poetry.lock* ./
 
+# Ensure compatibility between Poetry and the lock file
+RUN poetry self update 1.8.3
+
 # Install dependencies with Poetry
 RUN poetry config virtualenvs.create false && poetry install
 
